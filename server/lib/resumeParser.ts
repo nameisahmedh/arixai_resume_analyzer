@@ -1,4 +1,3 @@
-import * as pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
 
 export async function parseResume(file: Express.Multer.File): Promise<string> {
@@ -6,7 +5,8 @@ export async function parseResume(file: Express.Multer.File): Promise<string> {
 
   try {
     if (fileExt === 'pdf') {
-      const data = await (pdfParse as any).default(file.buffer);
+      const pdfParse = (await import('pdf-parse')).default;
+      const data = await pdfParse(file.buffer);
       return data.text.trim();
     } else if (fileExt === 'docx' || fileExt === 'doc') {
       const result = await mammoth.extractRawText({ buffer: file.buffer });
