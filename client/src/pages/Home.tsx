@@ -1,33 +1,69 @@
 import { useForm } from "react-hook-form";
 import { useLocation } from "wouter";
-import { Upload, FileText, ArrowRight, Loader2, CheckCircle } from "lucide-react";
+import { Upload, FileText, ArrowRight, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Layout } from "@/components/Layout";
 import { motion } from "framer-motion";
+import type { AnalysisResult } from "@/lib/mockData";
 
 export default function Home() {
   const [, setLocation] = useLocation();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  const [error, setError] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const { register, handleSubmit, formState: { errors }, setValue } = useForm();
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      setError(null);
+    }
+  };
 
   const onSubmit = async (data: any) => {
+    setError(null);
     setIsAnalyzing(true);
-    // Simulate API delay
-    setTimeout(() => {
+
+    try {
+      if (!selectedFile) {
+        setError('Please select a resume file');
+        setIsAnalyzing(false);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('resume', selectedFile);
+      formData.append('job_description', data.job_description || '');
+
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Analysis failed');
+      }
+
+      const result: AnalysisResult = await response.json();
+      
+      sessionStorage.setItem('analysisResult', JSON.stringify(result));
+      setLocation('/results');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred during analysis');
+    } finally {
       setIsAnalyzing(false);
-      setLocation("/results");
-    }, 2000);
+    }
   };
 
   return (
     <Layout>
       <div className="container relative max-w-screen-xl px-4 py-10 md:px-8 md:py-20 lg:py-32">
-        {/* Background decoration */}
         <div className="absolute inset-0 -z-10 overflow-hidden">
           <div className="absolute -top-[40%] -left-[20%] size-[800px] rounded-full bg-primary/5 blur-3xl opacity-50" />
           <div className="absolute top-[20%] -right-[20%] size-[600px] rounded-full bg-purple-500/5 blur-3xl opacity-50" />
@@ -77,33 +113,57 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                  {error && (
+                    <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 flex items-start gap-2">
+                      <AlertCircle className="size-5 text-destructive mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-destructive">{error}</p>
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     <Label htmlFor="resume">Resume File</Label>
-                    <div className="border-2 border-dashed border-border hover:border-primary/50 transition-colors rounded-xl p-8 flex flex-col items-center justify-center gap-3 text-center cursor-pointer bg-muted/30">
+                    <label 
+                      htmlFor="resume" 
+                      className="border-2 border-dashed border-border hover:border-primary/50 transition-colors rounded-xl p-8 flex flex-col items-center justify-center gap-3 text-center cursor-pointer bg-muted/30"
+                    >
                       <div className="p-3 rounded-full bg-primary/10 text-primary">
-                        <Upload className="size-6" />
+                        {selectedFile ? <FileText className="size-6" /> : <Upload className="size-6" />}
                       </div>
                       <div className="space-y-1">
-                        <p className="text-sm font-medium">Click to upload or drag and drop</p>
-                        <p className="text-xs text-muted-foreground">PDF, DOCX or TXT (Max 5MB)</p>
+                        {selectedFile ? (
+                          <>
+                            <p className="text-sm font-medium text-foreground">{selectedFile.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {(selectedFile.size / 1024).toFixed(1)} KB
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-sm font-medium">Click to upload or drag and drop</p>
+                            <p className="text-xs text-muted-foreground">PDF, DOCX or TXT (Max 5MB)</p>
+                          </>
+                        )}
                       </div>
                       <input 
                         id="resume" 
                         type="file" 
                         className="hidden" 
-                        {...register("resume", { required: true })}
+                        accept=".pdf,.docx,.doc,.txt"
+                        onChange={onFileChange}
+                        data-testid="input-resume"
                       />
-                    </div>
+                    </label>
                     {errors.resume && <p className="text-sm text-destructive">Please upload a resume.</p>}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="job_description">Job Description</Label>
+                    <Label htmlFor="job_description">Job Description (Optional)</Label>
                     <Textarea 
                       id="job_description"
-                      placeholder="Paste the job description here..."
+                      placeholder="Paste the job description here for better matching..."
                       className="min-h-[120px] resize-none bg-background/50"
                       {...register("job_description")}
+                      data-testid="input-job-description"
                     />
                   </div>
 
@@ -111,7 +171,8 @@ export default function Home() {
                     type="submit" 
                     size="lg" 
                     className="w-full text-base" 
-                    disabled={isAnalyzing}
+                    disabled={isAnalyzing || !selectedFile}
+                    data-testid="button-analyze"
                   >
                     {isAnalyzing ? (
                       <>

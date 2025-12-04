@@ -1,23 +1,50 @@
 import { Layout } from "@/components/Layout";
-import { MOCK_ANALYSIS } from "@/lib/mockData";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import type { AnalysisResult } from "@/lib/mockData";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { ArrowLeft, CheckCircle2, AlertCircle, Briefcase, BookOpen, User, Cpu } from "lucide-react";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, Tooltip } from "recharts";
 
 export default function Results() {
-  const result = MOCK_ANALYSIS;
+  const [, setLocation] = useLocation();
+  const [result, setResult] = useState<AnalysisResult | null>(null);
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem('analysisResult');
+    if (stored) {
+      try {
+        setResult(JSON.parse(stored));
+      } catch {
+        setLocation('/');
+      }
+    } else {
+      setLocation('/');
+    }
+  }, [setLocation]);
+
+  if (!result) {
+    return null;
+  }
+
+  const radarData = [
+    { category: 'Summary', score: result.section_scores?.summary || 0 },
+    { category: 'Experience', score: result.section_scores?.experience || 0 },
+    { category: 'Skills', score: result.section_scores?.skills || 0 },
+    { category: 'Projects', score: result.section_scores?.projects || 0 },
+  ];
 
   return (
     <Layout>
       <div className="container max-w-screen-xl px-4 py-8 md:px-8">
         <div className="mb-8">
           <Link href="/">
-            <Button variant="ghost" className="pl-0 hover:pl-2 transition-all text-muted-foreground">
+            <Button variant="ghost" className="pl-0 hover:pl-2 transition-all text-muted-foreground" data-testid="button-back">
               <ArrowLeft className="mr-2 size-4" />
               Analyze another resume
             </Button>
@@ -27,9 +54,7 @@ export default function Results() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-12">
-          {/* Left Column: Scores & Skills */}
           <div className="md:col-span-4 space-y-6">
-            {/* Overall Score Card */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -63,14 +88,14 @@ export default function Results() {
                         ></circle>
                      </svg>
                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-4xl font-bold tracking-tighter">{result.overall_score}</span>
+                        <span className="text-4xl font-bold tracking-tighter" data-testid="text-overall-score">{result.overall_score}</span>
                         <span className="text-sm text-muted-foreground font-medium">/ 100</span>
                      </div>
                   </div>
                   <div className="mt-6 w-full space-y-2">
                     <div className="flex justify-between text-sm font-medium">
                       <span>Skill Match</span>
-                      <span>{result.skill_match_score}%</span>
+                      <span data-testid="text-skill-match">{result.skill_match_score}%</span>
                     </div>
                     <Progress value={result.skill_match_score} className="h-2" />
                   </div>
@@ -78,7 +103,6 @@ export default function Results() {
               </Card>
             </motion.div>
 
-            {/* Matched Skills */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -93,8 +117,8 @@ export default function Results() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
-                    {result.matched_skills.map((skill) => (
-                      <Badge key={skill} variant="secondary" className="px-2 py-1 text-xs font-medium bg-green-500/10 text-green-700 hover:bg-green-500/20 border-transparent">
+                    {result.matched_skills.map((skill, idx) => (
+                      <Badge key={idx} variant="secondary" className="px-2 py-1 text-xs font-medium bg-green-500/10 text-green-700 hover:bg-green-500/20 border-transparent" data-testid={`badge-matched-${idx}`}>
                         {skill}
                       </Badge>
                     ))}
@@ -103,7 +127,6 @@ export default function Results() {
               </Card>
             </motion.div>
 
-            {/* Missing Skills */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -118,8 +141,8 @@ export default function Results() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
-                    {result.missing_skills.map((skill) => (
-                      <Badge key={skill} variant="outline" className="px-2 py-1 text-xs font-medium border-red-200 text-red-700 bg-red-50">
+                    {result.missing_skills.map((skill, idx) => (
+                      <Badge key={idx} variant="outline" className="px-2 py-1 text-xs font-medium border-red-200 text-red-700 bg-red-50" data-testid={`badge-missing-${idx}`}>
                         {skill}
                       </Badge>
                     ))}
@@ -127,11 +150,48 @@ export default function Results() {
                 </CardContent>
               </Card>
             </motion.div>
+
+            {result.section_scores && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.3 }}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Section Breakdown</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <RadarChart data={radarData}>
+                        <PolarGrid stroke="hsl(var(--border))" />
+                        <PolarAngleAxis 
+                          dataKey="category" 
+                          tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
+                        />
+                        <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                        <Radar 
+                          dataKey="score" 
+                          stroke="hsl(var(--primary))" 
+                          fill="hsl(var(--primary))" 
+                          fillOpacity={0.3} 
+                        />
+                        <Tooltip 
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--card))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                          }}
+                        />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
           </div>
 
-          {/* Right Column: Feedback */}
           <div className="md:col-span-8 space-y-6">
-            {/* High Level Feedback */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -142,14 +202,13 @@ export default function Results() {
                   <CardTitle className="text-xl">Summary</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-foreground/80 leading-relaxed">
+                  <p className="text-foreground/80 leading-relaxed" data-testid="text-feedback-summary">
                     {result.feedback_summary}
                   </p>
                 </CardContent>
               </Card>
             </motion.div>
 
-            {/* Detailed Section Feedback */}
             <h3 className="text-lg font-semibold mt-8 mb-4">Detailed Analysis</h3>
             
             <div className="grid gap-4">
@@ -170,7 +229,7 @@ export default function Results() {
                     <Separator className="my-4" />
                     <div className="rounded-md bg-muted p-4">
                       <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">Suggested Improvement</p>
-                      <p className="text-sm italic text-foreground/90">"{result.improved_summary_example}"</p>
+                      <p className="text-sm italic text-foreground/90" data-testid="text-improved-summary">"{result.improved_summary_example}"</p>
                     </div>
                   </CardContent>
                 </Card>
