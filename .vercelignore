@@ -1,9 +1,0 @@
-.git
-.gitignore
-README.md
-CONTRIBUTING.md
-LICENSE
-.local
-node_modules
-.env.local
-.env.*.local
