@@ -4,7 +4,7 @@ import { parseResume } from "./lib/resumeParser.js";
 import { analyzeResumeWithPerplexity } from "./lib/perplexity.js";
 import { registerWebhooks } from "./webhooks.js";
 import { ClerkExpressRequireAuth } from '@clerk/clerk-sdk-node';
-// 👈 POINTER: Database imports (optional - only used if DATABASE_URL is set)
+// 👈 POINTER: Database imports
 import { db } from "./db.js";
 import { users } from "../shared/schema.js";
 import { eq, sql } from "drizzle-orm";
@@ -82,20 +82,14 @@ export async function registerRoutes(
       }
       console.log(`[API] Received file: ${file.originalname}, size: ${file.size} for user: ${clerkId}`);
 
-      // 👈 POINTER: Optional database sync (non-critical)
-      // If database fails, analysis still continues
+      // 👈 POINTER: Sync user to database (non-critical)
       try {
-        const existingUser = await db.select().from(users).where(eq(users.clerkId, clerkId)).limit(1);
-
-        if (existingUser.length === 0) {
-          await db.insert(users).values({
-            clerkId,
-            username: `user_${clerkId}`,
-          }).onConflictDoNothing();
-        }
+        await db.insert(users).values({
+          clerkId,
+          username: `user_${clerkId}`,
+        }).onConflictDoNothing();
       } catch (dbError) {
-        console.warn('💾 Database sync failed (optional):', dbError.message);
-        // Continue without database - analysis doesn't depend on it
+        console.warn('⚠️  Database sync skipped:', dbError.message);
       }
 
       // 👈 POINTER: Parse resume text from file
@@ -123,7 +117,7 @@ export async function registerRoutes(
         const analysis = await analyzeResumeWithPerplexity(resumeText, jobDescription);
         console.log(`[API] Analysis completed for user: ${clerkId}`);
 
-        // Increment analysis count
+        // Increment analysis count (non-critical)
         try {
           await db.update(users)
             .set({
@@ -131,9 +125,8 @@ export async function registerRoutes(
               updatedAt: new Date()
             })
             .where(eq(users.clerkId, clerkId));
-          console.log(`[API] Incremented analysis count for user: ${clerkId}`);
         } catch (dbError) {
-          console.warn('Failed to increment analysis count:', dbError);
+          console.warn('⚠️  Failed to increment count:', dbError.message);
         }
 
         return res.json(analysis);
@@ -163,33 +156,27 @@ export async function registerRoutes(
     try {
       const { userId: clerkId } = req.auth;
 
-      console.log(`[API] User request - User: ${clerkId}`);
-
       try {
         const user = await db.select().from(users).where(eq(users.clerkId, clerkId)).limit(1);
-
-        if (user.length === 0) {
-          return res.json({
-            user: { id: clerkId, username: `user_${clerkId}` },
-            analysisCount: 0,
-            isPremium: false,
-            remaining: 5
-          });
-        }
-
-        const userData = user[0];
+        const userData = user[0] || { clerkId, username: `user_${clerkId}`, analysisCount: 0, isPremium: false };
+        
         res.json({
           user: userData,
-          analysisCount: userData.analysisCount,
-          isPremium: userData.isPremium,
-          remaining: userData.isPremium ? 999 : Math.max(0, 5 - userData.analysisCount)
+          analysisCount: userData.analysisCount || 0,
+          isPremium: userData.isPremium || false,
+          remaining: (userData.isPremium ? 999 : Math.max(0, 5 - (userData.analysisCount || 0)))
         });
       } catch (dbError) {
-        // Fallback when database is not available
-        res.json({ user: { id: clerkId, username: `user_${clerkId}` } });
+        console.warn('⚠️  Database query failed:', dbError.message);
+        res.json({
+          user: { clerkId, username: `user_${clerkId}` },
+          analysisCount: 0,
+          isPremium: false,
+          remaining: 5
+        });
       }
     } catch (error) {
-      console.error('Error fetching user:', error);
+      console.error('Error in user endpoint:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   });

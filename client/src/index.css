@@ -87,6 +87,15 @@
   h6 {
     font-family: var(--font-display);
   }
+
+  button,
+  a,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"] {
+    cursor: pointer;
+  }
 }
 
 /* Tailwind utility classes using our theme variables */

@@ -12,7 +12,9 @@ import { ClerkExpressWithAuth } from '@clerk/clerk-sdk-node';
 // Required for Clerk authentication to work
 const requiredEnvVars = [
   'CLERK_SECRET_KEY',
-  'VITE_CLERK_PUBLISHABLE_KEY'
+  'VITE_CLERK_PUBLISHABLE_KEY',
+  'DATABASE_URL',
+  'PERPLEXITY_API_KEY'
 ];
 
 for (const envVar of requiredEnvVars) {
@@ -21,19 +23,9 @@ for (const envVar of requiredEnvVars) {
   }
 }
 
-// 👈 POINTER: Database is OPTIONAL - app works without it
-if (!process.env.DATABASE_URL) {
-  console.warn('⚠️  DATABASE_URL not set. Running without persistent storage.');
-}
-
 // 👈 POINTER: Clerk webhooks for user sync (optional)
 if (!process.env.CLERK_WEBHOOK_SECRET) {
   console.warn('⚠️  CLERK_WEBHOOK_SECRET not set.');
-}
-
-// 👈 POINTER: CRITICAL - Required for AI analysis
-if (!process.env.PERPLEXITY_API_KEY) {
-  console.warn('⚠️  PERPLEXITY_API_KEY not set. Resume analysis will fail.');
 }
 
 const app = express();
@@ -155,9 +147,9 @@ app.use((req, res, next) => {
     () => {
       log(`serving on port ${port}`);
       log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-      log(`Database connected: ${process.env.DATABASE_URL ? 'Yes' : 'No'}`);
-      log(`Clerk configured: ${process.env.CLERK_SECRET_KEY ? 'Yes' : 'No'}`);
-      log(`Perplexity API: ${process.env.PERPLEXITY_API_KEY ? 'Yes' : 'No (using fallback)'}`);
+      log(`Database connected: Yes`);
+      log(`Clerk configured: Yes`);
+      log(`Perplexity API: Yes`);
     },
   );
 })();
