@@ -22,8 +22,8 @@
   ],
   "scripts": {
     "dev:client": "vite dev --port 5000",
-    "dev": "node --env-file=.env --loader tsx server/index.js",
-    "build": "node --loader tsx script/build.js",
+    "dev": "node --env-file=.env server/index.js",
+    "build": "node script/build.js",
     "start": "NODE_ENV=production node dist/index.mjs",
     "db:push": "drizzle-kit push"
   },
