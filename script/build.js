@@ -1,6 +1,6 @@
-import { build as esbuild } from "esbuild";
-import { build as viteBuild } from "vite";
-import { rm, readFile } from "fs/promises";
+const { build: esbuild } = require("esbuild");
+const { build: viteBuild } = require("vite");
+const { rm, readFile } = require("fs/promises");
 
 const allowlist = [
   "@google/generative-ai",
