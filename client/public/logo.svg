@@ -1,0 +1,29 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="purpleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8B5CF6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#A855F7;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Outer purple circle -->
+  <circle cx="100" cy="100" r="95" fill="none" stroke="url(#purpleGradient)" stroke-width="10"/>
+  
+  <!-- White background -->
+  <circle cx="100" cy="100" r="85" fill="white"/>
+  
+  <!-- CODE text -->
+  <text x="100" y="85" font-family="Arial, sans-serif" font-size="28" font-weight="bold" text-anchor="middle" fill="black">CODE</text>
+  
+  <!-- Globe/sphere pattern for O -->
+  <circle cx="100" cy="70" r="12" fill="none" stroke="black" stroke-width="1"/>
+  <ellipse cx="100" cy="70" rx="12" ry="6" fill="none" stroke="black" stroke-width="1"/>
+  <ellipse cx="100" cy="70" rx="6" ry="12" fill="none" stroke="black" stroke-width="1"/>
+  <line x1="88" y1="70" x2="112" y2="70" stroke="black" stroke-width="1"/>
+  
+  <!-- Red circle for O in OHOLICS -->
+  <circle cx="50" cy="125" r="8" fill="none" stroke="#DC2626" stroke-width="3"/>
+  
+  <!-- HOLICS text -->
+  <text x="70" y="135" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="black">HOLICS</text>
+</svg>
