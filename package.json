@@ -23,7 +23,7 @@
   "scripts": {
     "dev:client": "vite dev --port 5000",
     "dev": "node --env-file=.env server/index.js",
-    "build": "node script/build.cjs",
+    "build": "npm install --save-dev && node script/build.cjs",
     "start": "NODE_ENV=production node server/index.js",
     "db:push": "drizzle-kit push"
   },
