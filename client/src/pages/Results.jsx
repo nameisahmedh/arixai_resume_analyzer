@@ -1,3 +1,4 @@
+// 👈 POINTER: Results page - displays AI analysis output
 import { useLocation } from "wouter";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ export default function Results() {
   const [analysisResult, setAnalysisResult] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // 👈 POINTER: Load analysis results from session storage
   useEffect(() => {
     const result = sessionStorage.getItem('analysisResult');
     if (result) {

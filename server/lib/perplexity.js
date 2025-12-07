@@ -32,6 +32,7 @@ export async function analyzeResumeWithPerplexity(
     throw new Error('PERPLEXITY_API_KEY environment variable is not set. Please add it in the Secrets tab.');
   }
 
+  // 👈 POINTER: Log analysis start with model and parameters
   console.log('[Perplexity] Starting analysis', {
     model: 'sonar',
     hasJobDescription: !!jobDescription,

@@ -1,3 +1,4 @@
+// 👈 POINTER: Frontend router setup
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -9,6 +10,7 @@ import Results from "@/pages/Results";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ClerkProvider, SignIn, SignUp, SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
 
+// 👈 POINTER: Clerk authentication key from environment
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 if (!PUBLISHABLE_KEY) {

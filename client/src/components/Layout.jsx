@@ -1,3 +1,4 @@
+// 👈 POINTER: Main layout wrapper with navbar and footer
 import { mode_toggle as ModeToggle } from "@/components/mode-toggle";
 import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
@@ -9,9 +10,10 @@ export function Layout({ children }) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Header */}
+      {/* 👈 POINTER: Navigation header */}
       <header className="border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          {/* 👈 POINTER: Logo and home link */}
           <button
             onClick={() => setLocation("/")}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
@@ -20,6 +22,7 @@ export function Layout({ children }) {
             <span className="font-bold text-lg">ArixAI Resume Analyzer</span>
           </button>
 
+          {/* 👈 POINTER: Theme toggle and auth buttons */}
           <div className="flex items-center gap-4">
             <ModeToggle />
             <SignedIn>
@@ -34,7 +37,7 @@ export function Layout({ children }) {
         </div>
       </header>
 
-      {/* Main Content */}
+      {/* 👈 POINTER: Main content area */}
       <main className="min-h-[calc(100vh-4rem)]">
         {children}
       </main>

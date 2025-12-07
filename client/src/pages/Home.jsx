@@ -1,3 +1,4 @@
+// 👈 POINTER: Main resume upload page
 import { useForm } from "react-hook-form";
 import { useLocation } from "wouter";
 import { Upload, FileText, ArrowRight, Loader2, CheckCircle, AlertCircle, Sparkles, BarChart3, Shield, Zap } from "lucide-react";
@@ -18,6 +19,7 @@ export default function Home() {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const { getToken, isSignedIn } = useAuth();
 
+  // 👈 POINTER: Handle file selection from input
   const onFileChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -26,6 +28,7 @@ export default function Home() {
     }
   };
 
+  // 👈 POINTER: Main form submission - uploads resume for analysis
   const onSubmit = async (data) => {
     setError(null);
     setIsAnalyzing(true);
@@ -37,14 +40,14 @@ export default function Home() {
         return;
       }
 
-      // Check if user is signed in
+      // 👈 POINTER: Clerk authentication check
       if (!isSignedIn) {
         setError('Please sign in to analyze your resume');
         setIsAnalyzing(false);
         return;
       }
 
-      // Get the authentication token from Clerk
+      // 👈 POINTER: Get authentication token from Clerk
       const token = await getToken();
 
       if (!token) {
@@ -55,10 +58,12 @@ export default function Home() {
 
       console.log('Starting resume analysis...');
 
+      // 👈 POINTER: Prepare FormData with resume file and job description
       const formData = new FormData();
       formData.append('resume', selectedFile);
       formData.append('job_description', data.job_description || '');
 
+      // 👈 POINTER: Send to backend API for AI analysis
       const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: {
@@ -74,9 +79,11 @@ export default function Home() {
         throw new Error(errorData.error || 'Analysis failed');
       }
 
+      // 👈 POINTER: Get analysis results from API
       const result = await response.json();
 
       console.log('Analysis completed successfully');
+      // 👈 POINTER: Store results in session storage for Results page
       sessionStorage.setItem('analysisResult', JSON.stringify(result));
 
       setLocation('/results');

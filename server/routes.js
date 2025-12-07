@@ -4,6 +4,7 @@ import { parseResume } from "./lib/resumeParser.js";
 import { analyzeResumeWithPerplexity } from "./lib/perplexity.js";
 import { registerWebhooks } from "./webhooks.js";
 import { ClerkExpressRequireAuth } from '@clerk/clerk-sdk-node';
+// 👈 POINTER: Database imports (optional - only used if DATABASE_URL is set)
 import { db } from "./db.js";
 import { users } from "../shared/schema.js";
 import { eq, sql } from "drizzle-orm";
@@ -14,15 +15,18 @@ import { eq, sql } from "drizzle-orm";
  * - Size limit: 5MB
  * - Allowed types: PDF, DOCX, DOC, TXT
  */
+// 👈 POINTER: Multer configuration for file uploads
+// Stores files in memory (processed immediately, not saved to disk)
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB
+    fileSize: 5 * 1024 * 1024, // 👈 POINTER: 5MB file size limit
   },
   fileFilter: (_req, file, cb) => {
     const allowedTypes = ['.pdf', '.docx', '.doc', '.txt'];
     const fileExt = '.' + file.originalname.split('.').pop()?.toLowerCase();
 
+    // 👈 POINTER: Validate file type before processing
     if (allowedTypes.includes(fileExt)) {
       cb(null, true);
     } else {
@@ -78,7 +82,8 @@ export async function registerRoutes(
       }
       console.log(`[API] Received file: ${file.originalname}, size: ${file.size} for user: ${clerkId}`);
 
-      // Ensure user exists in database (non-critical)
+      // 👈 POINTER: Optional database sync (non-critical)
+      // If database fails, analysis still continues
       try {
         const existingUser = await db.select().from(users).where(eq(users.clerkId, clerkId)).limit(1);
 
@@ -89,11 +94,12 @@ export async function registerRoutes(
           }).onConflictDoNothing();
         }
       } catch (dbError) {
-        console.warn('Database not available, continuing without user sync:', dbError.message);
-        // Continue without database - don't block analysis
+        console.warn('💾 Database sync failed (optional):', dbError.message);
+        // Continue without database - analysis doesn't depend on it
       }
 
-      // Parse the resume
+      // 👈 POINTER: Parse resume text from file
+      // Supports PDF, DOCX, DOC, and TXT formats
       let resumeText;
       try {
         resumeText = await parseResume(file);
@@ -103,6 +109,7 @@ export async function registerRoutes(
         });
       }
 
+      // 👈 POINTER: Validate resume content length
       if (!resumeText || resumeText.length < 50) {
         console.log(`[API] Resume text too short: ${resumeText?.length || 0} chars`);
         return res.status(400).json({
@@ -110,7 +117,8 @@ export async function registerRoutes(
         });
       }
 
-      // Analyze with Perplexity
+      // 👈 POINTER: Main AI analysis via Perplexity API
+      // Returns structured analysis with scores, strengths, improvements, recommendations
       try {
         const analysis = await analyzeResumeWithPerplexity(resumeText, jobDescription);
         console.log(`[API] Analysis completed for user: ${clerkId}`);

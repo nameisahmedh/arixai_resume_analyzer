@@ -1,10 +1,15 @@
+// ===== SERVER ENTRY POINT =====
+// Main Express server configuration and startup
+// Handles CORS, middleware, and route registration
+
 import express from "express";
 import { registerRoutes } from "./routes.js";
 import { serveStatic } from "./static.js";
 import { createServer } from "http";
 import { ClerkExpressWithAuth } from '@clerk/clerk-sdk-node';
 
-// Validate required environment variables
+// 👈 POINTER: Environment variable validation
+// Required for Clerk authentication to work
 const requiredEnvVars = [
   'CLERK_SECRET_KEY',
   'VITE_CLERK_PUBLISHABLE_KEY'
@@ -16,25 +21,29 @@ for (const envVar of requiredEnvVars) {
   }
 }
 
+// 👈 POINTER: Database is OPTIONAL - app works without it
 if (!process.env.DATABASE_URL) {
-  console.warn('DATABASE_URL is not set. User data will not be persisted.');
+  console.warn('⚠️  DATABASE_URL not set. Running without persistent storage.');
 }
 
+// 👈 POINTER: Clerk webhooks for user sync (optional)
 if (!process.env.CLERK_WEBHOOK_SECRET) {
-  console.warn('CLERK_WEBHOOK_SECRET is not set. Webhooks will not work properly.');
+  console.warn('⚠️  CLERK_WEBHOOK_SECRET not set.');
 }
 
+// 👈 POINTER: CRITICAL - Required for AI analysis
 if (!process.env.PERPLEXITY_API_KEY) {
-  console.warn('PERPLEXITY_API_KEY is not set. Resume analysis will use fallback responses.');
+  console.warn('⚠️  PERPLEXITY_API_KEY not set. Resume analysis will fail.');
 }
 
 const app = express();
 const httpServer = createServer(app);
 
-// Trust proxy for proper IP forwarding
+// 👈 POINTER: Proxy configuration for production deployment
 app.set('trust proxy', 1);
 
-// CORS configuration
+// 👈 POINTER: CORS (Cross-Origin Resource Sharing) middleware
+// Allows frontend to make requests to backend
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   const allowedOrigins = [
