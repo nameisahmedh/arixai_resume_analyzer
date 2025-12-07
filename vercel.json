@@ -1,5 +1,8 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "public": false
+  "public": false,
+  "env": {
+    "NODE_ENV": "production"
+  }
 }
