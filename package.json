@@ -5,10 +5,10 @@
   "author": "ArixAI Team",
   "license": "MIT",
   "type": "module",
-  "homepage": "https://github.com/yourusername/arixai-resume-analyzer",
+  "homepage": "https://github.com/nameisahmedh/arixai_resume_analyzer",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/arixai-resume-analyzer.git"
+    "url": "https://github.com/nameisahmedh/arixai_resume_analyzer.git"
   },
   "keywords": [
     "resume",
@@ -22,9 +22,9 @@
   ],
   "scripts": {
     "dev:client": "vite dev --port 5000",
-    "dev": "node --env-file=.env server/index.js",
-    "build": "node script/build.js",
-    "start": "NODE_ENV=production node dist/index.cjs",
+    "dev": "node --env-file=.env --loader tsx server/index.js",
+    "build": "node --loader tsx script/build.js",
+    "start": "NODE_ENV=production node dist/index.mjs",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
