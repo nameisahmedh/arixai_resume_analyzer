@@ -179,7 +179,7 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 
 ## Support
 
-- 📧 Email: support@arixai.com
+- 📧 Email: mdqamarahmed123@gmail.com
 - 🐛 Report bugs: [GitHub Issues](https://github.com/nameisahmedh/arixai_resume_analyzer/issues)
 
 ## Credits
